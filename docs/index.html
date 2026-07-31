@@ -1,0 +1,103 @@
+<title>Kalshi Subaccounts</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{--bg:#0f1115;--panel:#171a21;--panel2:#1d212b;--ink:#e7ebf0;--mut:#8a93a3;
+    --line:#2a2f3a;--pos:#27c281;--neg:#ef5b6b;--hi:#f5c451;--accent:#5aa9ff;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans)}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 20px 70px}
+  .mast{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px}
+  .brand .dot{width:11px;height:11px;border-radius:3px;background:linear-gradient(135deg,var(--accent),var(--hi))}
+  .mastright{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .wintg{display:flex} .wintg button{background:var(--panel2);border:1px solid var(--line);color:var(--mut);
+    padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700}
+  .wintg button:first-child{border-radius:7px 0 0 7px}.wintg button:last-child{border-radius:0 7px 7px 0}
+  .wintg button.on{background:var(--ink);color:#0c0e12;border-color:var(--ink)}
+  .fresh{color:var(--mut);font-size:12px}.fresh b{color:var(--pos)}
+  .refresh{background:var(--accent);color:#0c0e12;border:none;border-radius:7px;
+    padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer}.refresh:disabled{opacity:.6}
+  .note{color:var(--mut);font-size:12px;margin:0 0 18px;line-height:1.6}
+  .sub{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+  .sub h2{font-size:16px;margin:0 0 4px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+  .sub h2 .tot{font-family:var(--mono);font-size:14px;font-weight:700}
+  .sub .meta{color:var(--mut);font-size:12px;margin-bottom:10px;font-family:var(--mono)}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;text-align:right;padding:3px 8px;font-weight:600;border-bottom:1px solid var(--line)}
+  th:first-child,th:nth-child(2){text-align:left}
+  td{padding:4px 8px;font-size:12.5px;text-align:right;font-family:var(--mono);border-bottom:1px solid rgba(42,47,58,.5)}
+  td:first-child,td:nth-child(2){text-align:left;font-family:var(--sans)}
+  tr:last-child td{border-bottom:none}
+  .pos{color:var(--pos);font-weight:600}.neg{color:var(--neg);font-weight:600}
+</style>
+<div class="wrap">
+  <div class="mast">
+    <div class="brand"><span class="dot"></span>Kalshi Subaccounts</div>
+    <div class="mastright">
+      <div class="wintg" id="wintabs"></div>
+      <span class="fresh" id="fresh"></span>
+      <button id="rbtn" class="refresh" onclick="doRefresh()" hidden>&#x21bb; Refresh</button>
+    </div>
+  </div>
+  <p class="note"><b>Settled P&amp;L per Kalshi subaccount.</b> Subaccount is recorded only on fills, so settled
+   results are attributed by each subaccount's share of fill cost per (strategy, ticker, side).
+   Subaccount 0's automated book and pre-field fills are excluded; the <b>Main Account</b> section shows
+   only <i>Manual Trade</i> fills from the main account (tagged sub 0 before 2026-07-17, untagged after
+   &mdash; both are folded in). Subs 1&ndash;9 = manual traders.
+   Windowed views count <b>settlements landing in the window</b> (attributed by all-time fill share, so
+   positions filled before the window still count when they settle); Fills / Fill cost show activity in the window.
+   Fill cost &gt; settled cost means open (unsettled) exposure.</p>
+  <div id="subs"></div>
+</div>
+<script>
+const PAYLOAD = {"windows":{"alltime":[{"sub":"0","strat":"Manual Trade","league":"MLB","fills":1920,"fill_cost":74326.68,"settled_cost":70535.86,"pnl":401.13},{"sub":"0","strat":"Manual Trade","league":"UFC","fills":942,"fill_cost":33475.13,"settled_cost":33475.13,"pnl":923.77},{"sub":"0","strat":"Manual Trade","league":"Soccer","fills":363,"fill_cost":15013.44,"settled_cost":15013.44,"pnl":-1096.68},{"sub":"0","strat":"Manual Trade","league":"PGAMAKECUT","fills":109,"fill_cost":13320.91,"settled_cost":13320.91,"pnl":-1020.29},{"sub":"0","strat":"Manual Trade","league":"DPWORLDTOUR","fills":80,"fill_cost":4368.87,"settled_cost":4368.87,"pnl":932.31},{"sub":"0","strat":"Manual Trade","league":"Esports","fills":120,"fill_cost":4059.58,"settled_cost":4059.58,"pnl":677.47},{"sub":"0","strat":"Manual Trade","league":"MENWORLDCUP","fills":18,"fill_cost":3079.0,"settled_cost":3079.0,"pnl":821.0},{"sub":"0","strat":"Manual Trade","league":"KBO","fills":46,"fill_cost":2084.15,"settled_cost":2084.15,"pnl":716.74},{"sub":"0","strat":"Manual Trade","league":"PGATOP20","fills":49,"fill_cost":2083.9,"settled_cost":2083.9,"pnl":-744.18},{"sub":"0","strat":"Manual Trade","league":"PGATOUR","fills":50,"fill_cost":1928.79,"settled_cost":1928.79,"pnl":271.21},{"sub":"0","strat":"Manual Trade","league":"PGATOP10","fills":39,"fill_cost":1181.49,"settled_cost":1181.49,"pnl":-296.26},{"sub":"0","strat":"Manual Trade","league":"WTA","fills":14,"fill_cost":836.25,"settled_cost":836.25,"pnl":-272.47},{"sub":"0","strat":"Manual Trade","league":"WorldCup","fills":10,"fill_cost":789.45,"settled_cost":789.45,"pnl":12.54},{"sub":"0","strat":"Manual Trade","league":"PGATOP5","fills":22,"fill_cost":661.38,"settled_cost":661.38,"pnl":-72.18},{"sub":"0","strat":"Manual Trade","league":"NBA","fills":9,"fill_cost":481.38,"settled_cost":481.38,"pnl":-231.38},{"sub":"0","strat":"Manual Trade","league":"NEXTTEAMNBA","fills":2,"fill_cost":435.0,"settled_cost":435.0,"pnl":65.0},{"sub":"0","strat":"Manual Trade","league":"ISLGAME","fills":3,"fill_cost":333.24,"settled_cost":333.24,"pnl":52.76},{"sub":"0","strat":"Manual Trade","league":"ACBGAME","fills":2,"fill_cost":321.0,"settled_cost":321.0,"pnl":179.0},{"sub":"0","strat":"Manual Trade","league":"Mention","fills":2,"fill_cost":288.0,"settled_cost":288.0,"pnl":12.0},{"sub":"0","strat":"Manual Trade","league":"WNBA","fills":4,"fill_cost":263.14,"settled_cost":263.14,"pnl":3.05},{"sub":"0","strat":"Manual Trade","league":"NPB","fills":2,"fill_cost":189.7,"settled_cost":189.7,"pnl":-189.7},{"sub":"0","strat":"Manual Trade","league":"T20MATCH","fills":1,"fill_cost":110.0,"settled_cost":110.0,"pnl":-110.0},{"sub":"0","strat":"Manual Trade","league":"NCAABaseball","fills":6,"fill_cost":106.0,"settled_cost":106.0,"pnl":94.0},{"sub":"0","strat":"Manual Trade","league":"BBSERIEAGAME","fills":1,"fill_cost":78.0,"settled_cost":78.0,"pnl":122.0},{"sub":"0","strat":"Manual Trade","league":"ODIMATCH","fills":1,"fill_cost":72.0,"settled_cost":72.0,"pnl":128.0},{"sub":"0","strat":"Manual Trade","league":"BSNGAME","fills":3,"fill_cost":64.14,"settled_cost":64.14,"pnl":65.09},{"sub":"0","strat":"Manual Trade","league":"CFLGAME","fills":1,"fill_cost":39.66,"settled_cost":39.66,"pnl":-39.66},{"sub":"0","strat":"Manual Trade","league":"SPBGAME","fills":4,"fill_cost":32.91,"settled_cost":32.91,"pnl":-32.91},{"sub":"0","strat":"Manual Trade","league":"WTAMATCH","fills":1,"fill_cost":22.0,"settled_cost":22.0,"pnl":178.0},{"sub":"0","strat":"Manual Trade","league":"ESPYS","fills":3,"fill_cost":19.68,"settled_cost":19.68,"pnl":-19.68},{"sub":"0","strat":"Manual Trade","league":"ATP","fills":7,"fill_cost":16.33,"settled_cost":16.33,"pnl":-16.33},{"sub":"0","strat":"Manual Trade","league":"NFLAFCWEST","fills":4,"fill_cost":66.0,"settled_cost":0.0,"pnl":0.0},{"sub":"0","strat":"Manual Trade","league":"NEXTTEAMMLB","fills":2,"fill_cost":178.01,"settled_cost":0.0,"pnl":0.0},{"sub":"1","strat":"Manual Trade","league":"MLB","fills":69,"fill_cost":1814.13,"settled_cost":1541.83,"pnl":77.47},{"sub":"12","strat":"Manual Trade","league":"MLB","fills":10,"fill_cost":4.27,"settled_cost":3.85,"pnl":0.14},{"sub":"12","strat":"Manual Trade","league":"WNBA","fills":7,"fill_cost":3.91,"settled_cost":3.5,"pnl":0.49},{"sub":"12","strat":"Manual Trade","league":"CFL","fills":1,"fill_cost":0.21,"settled_cost":0.21,"pnl":0.79},{"sub":"2","strat":"Manual Trade","league":"WorldCup","fills":11,"fill_cost":49.7,"settled_cost":49.7,"pnl":-4.7},{"sub":"2","strat":"Manual Trade","league":"MLB","fills":1,"fill_cost":2.95,"settled_cost":2.95,"pnl":2.05},{"sub":"2","strat":"Manual Trade","league":"Soccer","fills":1,"fill_cost":2.8,"settled_cost":2.8,"pnl":2.2},{"sub":"4","strat":"Manual Trade","league":"MLB","fills":9,"fill_cost":6.58,"settled_cost":6.58,"pnl":-0.58},{"sub":"5","strat":"Manual Trade","league":"Esports","fills":2,"fill_cost":1.22,"settled_cost":1.22,"pnl":-1.22},{"sub":"6","strat":"Manual Trade","league":"Mention","fills":5,"fill_cost":5.32,"settled_cost":5.32,"pnl":-0.32},{"sub":"7","strat":"Manual Trade","league":"Weather","fills":128,"fill_cost":1040.6,"settled_cost":957.27,"pnl":-37.16},{"sub":"7","strat":"Manual Trade","league":"GOLDD","fills":1,"fill_cost":4.7,"settled_cost":4.7,"pnl":0.3},{"sub":"7","strat":"Manual Trade","league":"SILVERD","fills":1,"fill_cost":4.7,"settled_cost":4.7,"pnl":0.3},{"sub":"9","strat":"Manual Trade","league":"Esports","fills":10,"fill_cost":85.7,"settled_cost":27.7,"pnl":5.1},{"sub":"9","strat":"Manual Trade","league":"KBO","fills":1,"fill_cost":15.0,"settled_cost":15.0,"pnl":2.1},{"sub":"9","strat":"Manual Trade","league":"WNBA","fills":1,"fill_cost":6.37,"settled_cost":6.37,"pnl":0.64},{"sub":"9","strat":"Manual Trade","league":"MLB","fills":1,"fill_cost":2.85,"settled_cost":2.85,"pnl":-2.85}],"last30":[{"sub":"0","strat":"Manual Trade","league":"UFC","fills":520,"fill_cost":21324.08,"settled_cost":21324.08,"pnl":783.73},{"sub":"0","strat":"Manual Trade","league":"MLB","fills":307,"fill_cost":10840.66,"settled_cost":8868.19,"pnl":-580.92},{"sub":"0","strat":"Manual Trade","league":"Soccer","fills":3,"fill_cost":172.0,"settled_cost":6916.83,"pnl":2.48},{"sub":"0","strat":"Manual Trade","league":"MENWORLDCUP","fills":0,"fill_cost":0.0,"settled_cost":3079.0,"pnl":821.0},{"sub":"0","strat":"Manual Trade","league":"DPWORLDTOUR","fills":40,"fill_cost":1884.32,"settled_cost":1884.32,"pnl":290.22},{"sub":"0","strat":"Manual Trade","league":"PGAMAKECUT","fills":27,"fill_cost":1551.08,"settled_cost":1551.08,"pnl":-762.43},{"sub":"0","strat":"Manual Trade","league":"Esports","fills":38,"fill_cost":1267.88,"settled_cost":1267.88,"pnl":138.92},{"sub":"0","strat":"Manual Trade","league":"PGATOP20","fills":31,"fill_cost":1260.89,"settled_cost":1260.89,"pnl":-671.17},{"sub":"0","strat":"Manual Trade","league":"PGATOUR","fills":33,"fill_cost":1068.8,"settled_cost":1068.8,"pnl":131.2},{"sub":"0","strat":"Manual Trade","league":"KBO","fills":26,"fill_cost":888.69,"settled_cost":888.69,"pnl":435.53},{"sub":"0","strat":"Manual Trade","league":"WTA","fills":9,"fill_cost":311.8,"settled_cost":836.25,"pnl":-272.47},{"sub":"0","strat":"Manual Trade","league":"PGATOP10","fills":17,"fill_cost":454.0,"settled_cost":454.0,"pnl":-454.0},{"sub":"0","strat":"Manual Trade","league":"NEXTTEAMNBA","fills":0,"fill_cost":0.0,"settled_cost":435.0,"pnl":65.0},{"sub":"0","strat":"Manual Trade","league":"PGATOP5","fills":7,"fill_cost":423.79,"settled_cost":423.79,"pnl":-84.59},{"sub":"0","strat":"Manual Trade","league":"Mention","fills":2,"fill_cost":288.0,"settled_cost":288.0,"pnl":12.0},{"sub":"0","strat":"Manual Trade","league":"WNBA","fills":4,"fill_cost":263.14,"settled_cost":263.14,"pnl":3.05},{"sub":"0","strat":"Manual Trade","league":"WorldCup","fills":1,"fill_cost":20.0,"settled_cost":20.0,"pnl":-20.0},{"sub":"0","strat":"Manual Trade","league":"ESPYS","fills":3,"fill_cost":19.68,"settled_cost":19.68,"pnl":-19.68},{"sub":"0","strat":"Manual Trade","league":"ATP","fills":3,"fill_cost":10.0,"settled_cost":16.33,"pnl":-16.33},{"sub":"0","strat":"Manual Trade","league":"NFLAFCWEST","fills":4,"fill_cost":66.0,"settled_cost":0.0,"pnl":0.0},{"sub":"1","strat":"Manual Trade","league":"MLB","fills":69,"fill_cost":1814.13,"settled_cost":1541.83,"pnl":77.47},{"sub":"12","strat":"Manual Trade","league":"MLB","fills":10,"fill_cost":4.27,"settled_cost":3.85,"pnl":0.14},{"sub":"12","strat":"Manual Trade","league":"WNBA","fills":7,"fill_cost":3.91,"settled_cost":3.5,"pnl":0.49},{"sub":"12","strat":"Manual Trade","league":"CFL","fills":1,"fill_cost":0.21,"settled_cost":0.21,"pnl":0.79},{"sub":"2","strat":"Manual Trade","league":"WorldCup","fills":11,"fill_cost":49.7,"settled_cost":49.7,"pnl":-4.7},{"sub":"2","strat":"Manual Trade","league":"MLB","fills":1,"fill_cost":2.95,"settled_cost":2.95,"pnl":2.05},{"sub":"2","strat":"Manual Trade","league":"Soccer","fills":1,"fill_cost":2.8,"settled_cost":2.8,"pnl":2.2},{"sub":"4","strat":"Manual Trade","league":"MLB","fills":9,"fill_cost":6.58,"settled_cost":6.58,"pnl":-0.58},{"sub":"5","strat":"Manual Trade","league":"Esports","fills":2,"fill_cost":1.22,"settled_cost":1.22,"pnl":-1.22},{"sub":"6","strat":"Manual Trade","league":"Mention","fills":5,"fill_cost":5.32,"settled_cost":5.32,"pnl":-0.32},{"sub":"7","strat":"Manual Trade","league":"Weather","fills":128,"fill_cost":1040.6,"settled_cost":957.27,"pnl":-37.16},{"sub":"7","strat":"Manual Trade","league":"SILVERD","fills":1,"fill_cost":4.7,"settled_cost":4.7,"pnl":0.3},{"sub":"7","strat":"Manual Trade","league":"GOLDD","fills":1,"fill_cost":4.7,"settled_cost":4.7,"pnl":0.3},{"sub":"9","strat":"Manual Trade","league":"Esports","fills":10,"fill_cost":85.7,"settled_cost":27.7,"pnl":5.1},{"sub":"9","strat":"Manual Trade","league":"KBO","fills":1,"fill_cost":15.0,"settled_cost":15.0,"pnl":2.1},{"sub":"9","strat":"Manual Trade","league":"WNBA","fills":1,"fill_cost":6.37,"settled_cost":6.37,"pnl":0.64},{"sub":"9","strat":"Manual Trade","league":"MLB","fills":1,"fill_cost":2.85,"settled_cost":2.85,"pnl":-2.85}],"last7":[{"sub":"0","strat":"Manual Trade","league":"MLB","fills":47,"fill_cost":1827.03,"settled_cost":1340.99,"pnl":269.99},{"sub":"0","strat":"Manual Trade","league":"PGAMAKECUT","fills":0,"fill_cost":0.0,"settled_cost":631.94,"pnl":-450.89},{"sub":"0","strat":"Manual Trade","league":"PGATOUR","fills":7,"fill_cost":60.0,"settled_cost":356.0,"pnl":44.0},{"sub":"0","strat":"Manual Trade","league":"KBO","fills":13,"fill_cost":28.67,"settled_cost":283.53,"pnl":393.64},{"sub":"0","strat":"Manual Trade","league":"Esports","fills":4,"fill_cost":162.0,"settled_cost":162.0,"pnl":38.0},{"sub":"0","strat":"Manual Trade","league":"NFLAFCWEST","fills":4,"fill_cost":66.0,"settled_cost":0.0,"pnl":0.0},{"sub":"1","strat":"Manual Trade","league":"MLB","fills":54,"fill_cost":1649.97,"settled_cost":1377.67,"pnl":77.63},{"sub":"12","strat":"Manual Trade","league":"MLB","fills":10,"fill_cost":4.27,"settled_cost":3.85,"pnl":0.14},{"sub":"12","strat":"Manual Trade","league":"WNBA","fills":7,"fill_cost":3.91,"settled_cost":3.5,"pnl":0.49},{"sub":"12","strat":"Manual Trade","league":"CFL","fills":1,"fill_cost":0.21,"settled_cost":0.21,"pnl":0.79},{"sub":"4","strat":"Manual Trade","league":"MLB","fills":4,"fill_cost":2.76,"settled_cost":2.76,"pnl":-0.76},{"sub":"5","strat":"Manual Trade","league":"Esports","fills":2,"fill_cost":1.22,"settled_cost":1.22,"pnl":-1.22},{"sub":"6","strat":"Manual Trade","league":"Mention","fills":1,"fill_cost":0.88,"settled_cost":5.32,"pnl":-0.32},{"sub":"7","strat":"Manual Trade","league":"Weather","fills":128,"fill_cost":1040.6,"settled_cost":957.27,"pnl":-37.16},{"sub":"7","strat":"Manual Trade","league":"GOLDD","fills":1,"fill_cost":4.7,"settled_cost":4.7,"pnl":0.3},{"sub":"7","strat":"Manual Trade","league":"SILVERD","fills":1,"fill_cost":4.7,"settled_cost":4.7,"pnl":0.3},{"sub":"9","strat":"Manual Trade","league":"KBO","fills":0,"fill_cost":0.0,"settled_cost":15.0,"pnl":2.1},{"sub":"9","strat":"Manual Trade","league":"WNBA","fills":1,"fill_cost":6.37,"settled_cost":6.37,"pnl":0.64},{"sub":"9","strat":"Manual Trade","league":"Esports","fills":4,"fill_cost":58.0,"settled_cost":0.0,"pnl":0.0}],"yesterday":[{"sub":"0","strat":"Manual Trade","league":"MLB","fills":21,"fill_cost":1012.57,"settled_cost":756.0,"pnl":344.0},{"sub":"0","strat":"Manual Trade","league":"Esports","fills":2,"fill_cost":80.0,"settled_cost":80.0,"pnl":120.0},{"sub":"0","strat":"Manual Trade","league":"NFLAFCWEST","fills":3,"fill_cost":46.55,"settled_cost":0.0,"pnl":0.0},{"sub":"1","strat":"Manual Trade","league":"MLB","fills":13,"fill_cost":336.17,"settled_cost":110.08,"pnl":-109.07},{"sub":"12","strat":"Manual Trade","league":"MLB","fills":3,"fill_cost":1.69,"settled_cost":1.13,"pnl":-0.14},{"sub":"12","strat":"Manual Trade","league":"WNBA","fills":2,"fill_cost":1.01,"settled_cost":0.36,"pnl":-0.36},{"sub":"12","strat":"Manual Trade","league":"CFL","fills":1,"fill_cost":0.21,"settled_cost":0.0,"pnl":0.0},{"sub":"5","strat":"Manual Trade","league":"Esports","fills":1,"fill_cost":1.0,"settled_cost":1.0,"pnl":-1.0},{"sub":"7","strat":"Manual Trade","league":"Weather","fills":7,"fill_cost":96.2,"settled_cost":113.4,"pnl":-13.4},{"sub":"9","strat":"Manual Trade","league":"Esports","fills":4,"fill_cost":58.0,"settled_cost":0.0,"pnl":0.0}]},"win_order":["alltime","last30","last7","yesterday"],"win_labels":{"alltime":"All-time","last30":"Last 30 days","last7":"Last 7 days","yesterday":"Yesterday (ET)"},"generated_epoch":1785522372,"generated_str":"2026-07-31 1:26 PM CDT"};
+const NAMES = {'0':'Main Account','1':'Tom','2':'Eric Kim','4':'Eric Lindquist','6':'Loughy','7':'Eytan','9':'John'};
+let win = PAYLOAD.win_order[0];
+const money = v => (v<0?'-$':'$') + Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0});
+const fmtRoi = v => (v>0?'+':'') + v.toFixed(1) + '%';
+function winTabs(){
+  document.getElementById('wintabs').innerHTML = PAYLOAD.win_order.map(w=>
+    `<button class="${w===win?'on':''}" onclick="win='${w}';render()">${PAYLOAD.win_labels[w]}</button>`).join('');
+}
+function fresh(){
+  const mins = Math.floor((Date.now()/1000 - PAYLOAD.generated_epoch)/60);
+  document.getElementById('fresh').innerHTML =
+    `Data <b>${PAYLOAD.generated_str}</b> · ${mins<1?'just now':mins<60?mins+' min ago':Math.floor(mins/60)+'h '+(mins%60)+'m ago'}`;
+}
+function render(){
+  winTabs(); fresh();
+  const rows = PAYLOAD.windows[win]||[];
+  const bySub = {};
+  rows.forEach(r=>{(bySub[r.sub]=bySub[r.sub]||[]).push(r);});
+  const subs = Object.keys(bySub).sort((a,b)=>(a==='?')-(b==='?')||(+a)-(+b));
+  const el = document.getElementById('subs'); el.innerHTML='';
+  for(const s of subs){
+    const g = bySub[s];
+    const t = g.reduce((a,r)=>({f:a.f+r.fills,fc:a.fc+r.fill_cost,sc:a.sc+r.settled_cost,p:a.p+r.pnl}),{f:0,fc:0,sc:0,p:0});
+    const roi = t.sc? t.p/t.sc*100 : 0;
+    const open = Math.max(0, t.fc - t.sc);
+    const body = g.sort((a,b)=>b.settled_cost-a.settled_cost).map(r=>{
+      const rr = r.settled_cost? r.pnl/r.settled_cost*100 : 0;
+      return `<tr><td>${r.strat}</td><td>${r.league}</td><td>${r.fills.toLocaleString()}</td>
+        <td>${money(r.fill_cost)}</td><td>${money(r.settled_cost)}</td>
+        <td class="${r.pnl>=0?'pos':'neg'}">${money(r.pnl)}</td>
+        <td class="${rr>=0?'pos':'neg'}">${r.settled_cost?fmtRoi(rr):'—'}</td></tr>`;}).join('');
+    el.insertAdjacentHTML('beforeend',
+      `<div class="sub"><h2><span>${NAMES[s]?NAMES[s]+' <span style="color:var(--mut);font-weight:400;font-size:12px">(sub '+s+(s==='0'?' · manual trades only':'')+')</span>':(s==='?'?'n/a (pre-field fills)':'Subaccount '+s)}</span>
+        <span class="tot ${t.p>=0?'pos':'neg'}">${money(t.p)} · ${t.sc?fmtRoi(roi):'—'}</span></h2>
+       <div class="meta">${t.f.toLocaleString()} fills · ${money(t.fc)} fill cost · ${money(t.sc)} settled · ~${money(open)} open</div>
+       <table><thead><tr><th>Strategy</th><th>League</th><th>Fills</th><th>Fill cost</th><th>Settled</th><th>P&L</th><th>ROI</th></tr></thead>
+       <tbody>${body}</tbody></table></div>`);
+  }
+}
+async function doRefresh(){
+  const b=document.getElementById('rbtn'); b.disabled=true; b.textContent='⏳ Refreshing…';
+  try{ const r=await fetch('/refresh',{method:'POST'});
+    if(r.ok) location.reload(); else { alert(await r.text()); b.disabled=false; b.textContent='↻ Refresh'; }
+  }catch(e){ alert('Refresh needs the local server.'); b.disabled=false; b.textContent='↻ Refresh'; }
+}
+if(location.hostname==='127.0.0.1'||location.hostname==='localhost')
+  document.getElementById('rbtn').hidden=false;
+render();
+</script>

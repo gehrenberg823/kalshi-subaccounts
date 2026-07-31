@@ -1,0 +1,9 @@
+# keep internal pipeline + prod-ClickHouse query logic OUT of the public repo
+refresh.py
+server.py
+*.log
+__pycache__/
+.DS_Store
+
+# local build output (published copy lives in docs/)
+subaccounts.html
